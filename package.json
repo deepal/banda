@@ -1,15 +1,15 @@
 {
-  "name": "insomnia",
+  "name": "banda",
   "private": true,
   "version": "1.0.0",
-  "author": "Kong <office@konghq.com>",
-  "description": "Insomnia is a cross-platform REST client, built on top of Electron.",
+  "author": "Deepal Jayasekara <dpjayasekara@gmail.com>",
+  "description": "A lighter fork of Insomnia",
   "license": "MIT",
-  "repository": "https://github.com/kong/insomnia",
+  "repository": "https://github.com/deepal/banda",
   "bugs": {
-    "url": "https://github.com/kong/insomnia/issues"
+    "url": "https://github.com/deepal/banda/issues"
   },
-  "homepage": "https://github.com/kong/insomnia#readme",
+  "homepage": "https://github.com/deepal/banda#readme",
   "engines": {
     "node": ">=18.15 <20",
     "npm": ">=8.19.0"

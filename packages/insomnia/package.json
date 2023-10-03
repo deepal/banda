@@ -1,20 +1,20 @@
 {
-  "name": "insomnia",
+  "name": "banda",
   "version": "2023.5.8",
-  "productName": "Insomnia",
+  "productName": "banda",
   "private": true,
-  "description": "The Collaborative API Design Tool",
-  "homepage": "https://konghq.com",
+  "description": "A lighter version of Insomnia",
+  "homepage": "https://github.com/deepal/banda",
   "bugs": {
-    "url": "https://github.com/Kong/insomnia/issues"
+    "url": "https://github.com/deepal/banda/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Kong/insomnia.git",
+    "url": "git+https://github.com/deepal/banda.git",
     "directory": "packages/insomnia"
   },
   "license": "MIT",
-  "author": "Kong <office@konghq.com>",
+  "author": "Deepal Jayasekara <dpjayasekara@gmail.com>",
   "main": "src/main.min.js",
   "scripts": {
     "build": "npm run build:sr && npm run build:app",

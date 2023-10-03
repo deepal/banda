@@ -297,7 +297,7 @@ const Root = () => {
           {importUri && (
             <ImportModal
               onHide={() => setImportUri('')}
-              projectName="Insomnia"
+              projectName="Starter"
               organizationId={organizationId}
               from={{ type: 'uri', defaultValue: importUri }}
             />
@@ -339,64 +339,6 @@ const Root = () => {
                         ))}
                       </nav>
                     )}
-                  </Fragment>
-                )}
-              </div>
-              <div className="flex gap-[--padding-sm] items-center justify-end p-2">
-                {isLoggedIn() ? (
-                  <MenuTrigger>
-                    <Button className="px-4 py-1 flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm">
-                      <Icon icon="user" />{' '}
-                      {`${getFirstName()} ${getLastName()}`}
-                    </Button>
-                    <Popover className="min-w-max">
-                      <Menu
-                        onAction={action => {
-                          if (action === 'logout') {
-                            logout();
-                          }
-
-                          if (action === 'account-settings') {
-                            window.main.openInBrowser(
-                              'https://app.insomnia.rest/app/account/'
-                            );
-                          }
-                        }}
-                        className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
-                      >
-                        <Item
-                          id="account-settings"
-                          className="flex gap-2 px-[--padding-md] aria-selected:font-bold items-center text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap bg-transparent hover:bg-[--hl-sm] disabled:cursor-not-allowed focus:bg-[--hl-xs] focus:outline-none transition-colors"
-                          aria-label="Account settings"
-                        >
-                          <Icon icon="gear" />
-                          <span>Account Settings</span>
-                        </Item>
-                        <Item
-                          id="logout"
-                          className="flex gap-2 px-[--padding-md] aria-selected:font-bold items-center text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap bg-transparent hover:bg-[--hl-sm] disabled:cursor-not-allowed focus:bg-[--hl-xs] focus:outline-none transition-colors"
-                          aria-label="logout"
-                        >
-                          <Icon icon="sign-out" />
-                          <span>Logout</span>
-                        </Item>
-                      </Menu>
-                    </Popover>
-                  </MenuTrigger>
-                ) : (
-                  <Fragment>
-                    <Button
-                      onPress={showLoginModal}
-                      className="px-4 py-1 font-semibold border border-solid border-[--hl-md] flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-                    >
-                      Login
-                    </Button>
-                    <a
-                      className="px-4 py-1 flex items-center justify-center gap-2 aria-pressed:bg-[rgba(var(--color-surprise-rgb),0.8)] focus:bg-[rgba(var(--color-surprise-rgb),0.9)] bg-[--color-surprise] font-semibold rounded-sm text-[--color-font-surprise] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-                      href="https://app.insomnia.rest/app/signup/"
-                    >
-                      Sign Up
-                    </a>
                   </Fragment>
                 )}
               </div>
@@ -457,16 +399,6 @@ const Root = () => {
                   />
                 </Tooltip>
               </TooltipTrigger>
-              <Link>
-                <a
-                  className="flex focus:outline-none focus:underline gap-1 items-center text-xs text-[--color-font] px-[--padding-md]"
-                  href="https://konghq.com/"
-                >
-                  Made with
-                  <Icon className="text-[--color-surprise]" icon="heart" /> by
-                  Kong
-                </a>
-              </Link>
             </div>
           </div>
 

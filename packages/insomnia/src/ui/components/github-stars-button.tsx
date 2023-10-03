@@ -24,7 +24,7 @@ export const GitHubStarsButton = () => {
       return;
     }
 
-    fetch('https://api.github.com/repos/Kong/insomnia')
+    fetch('https://api.github.com/repos/deepal/banda')
       .then(data => data.json())
       .then(info => {
         if (!('watchers' in info)) {
