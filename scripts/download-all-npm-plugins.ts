@@ -1,6 +1,6 @@
-import https from 'https';
-import { statSync, mkdirSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
+import { mkdirSync, statSync, writeFileSync } from 'fs';
+import https from 'https';
 
 /*
 
@@ -24,7 +24,7 @@ const pageSize = 250;
 const npmSearchUrl = `https://registry.npmjs.org/-/v1/search?text=${npmSearchText}&size=${pageSize}`;
 
 const request = https.get(npmSearchUrl, response => {
-  let data: Uint8Array[] = [];
+  const data: Uint8Array[] = [];
   response.on('data', (chunk: Uint8Array) => {
     data.push(chunk);
   });

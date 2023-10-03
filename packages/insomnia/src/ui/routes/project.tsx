@@ -509,7 +509,7 @@ const ProjectRoute: FC = () => {
                   }}
                 >
                   {item => {
-                    console.log(item)
+                    console.log(item);
                     return (
                       <Item
                         key={item._id}

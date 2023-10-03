@@ -1,4 +1,4 @@
-import React, { SVGProps, memo } from 'react';
+import React, { memo, SVGProps } from 'react';
 export const SvgIcnArrowRight = memo<SVGProps<SVGSVGElement>>(props => (
   <svg
     width="1em"
