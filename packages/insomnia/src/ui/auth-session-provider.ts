@@ -1,6 +1,5 @@
 import { decodeBase64, encodeBase64 } from '@getinsomnia/api-client/base64';
 import { keyPair, open } from '@getinsomnia/api-client/sealedbox';
-import * as Sentry from '@sentry/electron';
 
 import * as session from '../account/session';
 import { getAppWebsiteBaseURL } from '../common/constants';
@@ -22,20 +21,15 @@ encodeBase64(sessionKeyPair.secretKey).then(res => {
  * This keypair can be re-used for the entire session.
  */
 export async function submitAuthCode(code: string) {
-  try {
-    const rawBox = await decodeBase64(code.trim());
-    const publicKey = await decodeBase64(window.localStorage.getItem('insomnia.publicKey') || '');
-    const secretKey = await decodeBase64(window.localStorage.getItem('insomnia.secretKey') || '');
-    const boxData = open(rawBox, publicKey, secretKey);
-    invariant(boxData, 'Invalid authentication code.');
+  const rawBox = await decodeBase64(code.trim());
+  const publicKey = await decodeBase64(window.localStorage.getItem('insomnia.publicKey') || '');
+  const secretKey = await decodeBase64(window.localStorage.getItem('insomnia.secretKey') || '');
+  const boxData = open(rawBox, publicKey, secretKey);
+  invariant(boxData, 'Invalid authentication code.');
 
-    const decoder = new TextDecoder();
-    const box: AuthBox = JSON.parse(decoder.decode(boxData));
-    await session.absorbKey(box.token, box.key);
-  } catch (error) {
-    Sentry.captureException(error);
-    throw error;
-  }
+  const decoder = new TextDecoder();
+  const box: AuthBox = JSON.parse(decoder.decode(boxData));
+  await session.absorbKey(box.token, box.key);
 }
 
 export async function getLoginUrl() {

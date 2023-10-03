@@ -14,7 +14,6 @@ import { reload } from '../../../templating/index';
 import { useSettingsPatcher } from '../../hooks/use-request';
 import { RootLoaderData } from '../../routes/root';
 import { CopyButton } from '../base/copy-button';
-import { Link } from '../base/link';
 import { HelpTooltip } from '../help-tooltip';
 import { showAlert, showPrompt } from '../modals';
 import { Button } from '../themed-button';
@@ -64,8 +63,7 @@ export const Plugins: FC = () => {
   return (
     <div>
       <p className="notice info no-margin-top">
-        Plugins is still an experimental feature. See{' '}
-        <Link href={docsPlugins}>Documentation</Link> for more info.
+        Plugins is still an experimental feature.
       </p>
       {plugins.length === 0 ? (
         <div className="text-center faint italic pad">No Plugins Added</div>
