@@ -9,7 +9,6 @@ export const canDuplicate = false;
 export const canSync = false;
 
 export const DEFAULT_PROJECT_ID = `${prefix}_default-project`;
-
 export const isDefaultProject = (project: Pick<Project, '_id'>) => project._id === DEFAULT_PROJECT_ID;
 export const isNotDefaultProject = (project: Pick<Project, '_id'>) => !isDefaultProject(project);
 export const isLocalProject = (project: Pick<Project, 'remoteId'>): project is LocalProject => project.remoteId === null;

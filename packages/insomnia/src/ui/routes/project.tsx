@@ -12,7 +12,6 @@ import {
   Popover,
   SearchField,
   Select,
-  SelectValue,
 } from 'react-aria-components';
 import {
   LoaderFunction,
@@ -34,7 +33,6 @@ import {
 } from '../../common/constants';
 import { fuzzyMatchAll, isNotNullOrUndefined } from '../../common/misc';
 import { descendingNumberSort, sortMethodMap } from '../../common/sorting';
-import { strings } from '../../common/strings';
 import * as models from '../../models';
 import { ApiSpec } from '../../models/api-spec';
 import { CaCertificate } from '../../models/ca-certificate';
@@ -57,13 +55,12 @@ import { ProjectDropdown } from '../components/dropdowns/project-dropdown';
 import { WorkspaceCardDropdown } from '../components/dropdowns/workspace-card-dropdown';
 import { ErrorBoundary } from '../components/error-boundary';
 import { Icon } from '../components/icon';
-import { showAlert, showPrompt } from '../components/modals';
+import { showPrompt } from '../components/modals';
 import { GitRepositoryCloneModal } from '../components/modals/git-repository-settings-modal/git-repo-clone-modal';
 import { ImportModal } from '../components/modals/import-modal';
 import { EmptyStatePane } from '../components/panes/project-empty-state-pane';
 import { SidebarLayout } from '../components/sidebar-layout';
 import { TimeFromNow } from '../components/time-from-now';
-import { useOrganizationLoaderData } from './organization';
 
 export interface WorkspaceWithMetadata {
   _id: string;
@@ -321,8 +318,6 @@ const ProjectRoute: FC = () => {
     projectId: string;
   };
 
-  const { organizations } = useOrganizationLoaderData();
-
   const [searchParams, setSearchParams] = useSearchParams();
   const [isGitRepositoryCloneModalOpen, setIsGitRepositoryCloneModalOpen] =
     useState(false);
@@ -378,8 +373,6 @@ const ProjectRoute: FC = () => {
       },
     });
   };
-
-  const createNewProjectFetcher = useFetcher();
 
   const importFromGit = () => {
     setIsGitRepositoryCloneModalOpen(true);
@@ -467,51 +460,6 @@ const ProjectRoute: FC = () => {
           className="new-sidebar"
           renderPageSidebar={
             <div className="flex flex-1 flex-col overflow-hidden divide-solid divide-y divide-[--hl-md]">
-              <div className="p-[--padding-sm]">
-                <Select
-                  aria-label="Organizations"
-                  onSelectionChange={id => {
-                    navigate(`/organization/${id}`);
-                  }}
-                  selectedKey={organizationId}
-                  items={organizations}
-                >
-                  <Button className="px-4 py-1 flex flex-1 items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm">
-                    <SelectValue<Organization> className="flex truncate items-center justify-center gap-2">
-                      {({ selectedItem }) => {
-                        return selectedItem?.name;
-                      }}
-                    </SelectValue>
-                    <Icon icon="caret-down" />
-                  </Button>
-                  <Popover className="min-w-max">
-                    <ListBox<Organization> className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none">
-                      {item => (
-                        <Item
-                          id={item._id}
-                          key={item._id}
-                          className="flex gap-2 px-[--padding-md] aria-selected:font-bold items-center text-[--color-font] h-[--line-height-xs] w-full text-md whitespace-nowrap bg-transparent hover:bg-[--hl-sm] disabled:cursor-not-allowed focus:bg-[--hl-xs] focus:outline-none transition-colors"
-                          aria-label={item.name}
-                          textValue={item.name}
-                          value={item}
-                        >
-                          {({ isSelected }) => (
-                            <Fragment>
-                              <span>{item.name}</span>
-                              {isSelected && (
-                                <Icon
-                                  icon="check"
-                                  className="text-[--color-success] justify-self-end"
-                                />
-                              )}
-                            </Fragment>
-                          )}
-                        </Item>
-                      )}
-                    </ListBox>
-                  </Popover>
-                </Select>
-              </div>
               <div className="flex flex-col flex-1">
                 <Heading className="p-[--padding-sm] uppercase text-xs">
                   Projects ({projectsCount})
@@ -540,48 +488,6 @@ const ProjectRoute: FC = () => {
                       </div>
                     </SearchField>
 
-                    <Button
-                      onPress={() => {
-                        if (activeProject.remoteId) {
-                          showAlert({
-                            title: 'This capability is coming soon',
-                            okLabel: 'Close',
-                            message: (
-                              <div>
-                                <p>
-                                  At the moment it is not possible to create more
-                                  cloud projects within a team in Insomnia.
-                                </p>
-                                <p>🚀 This feature is coming soon!</p>
-                              </div>
-                            ),
-                          });
-                        } else {
-                          const defaultValue = `My ${strings.project.singular}`;
-                          showPrompt({
-                            title: `Create New ${strings.project.singular}`,
-                            submitName: 'Create',
-                            placeholder: defaultValue,
-                            defaultValue,
-                            selectText: true,
-                            onComplete: async name =>
-                              createNewProjectFetcher.submit(
-                                {
-                                  name,
-                                },
-                                {
-                                  action: `/organization/${organizationId}/project/new`,
-                                  method: 'post',
-                                }
-                              ),
-                          });
-                        }
-                      }}
-                      aria-label="Create new Project"
-                      className="flex items-center justify-center h-full aspect-square aria-pressed:bg-[--hl-sm] rounded-sm text-[--color-font] hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all text-sm"
-                    >
-                      <Icon icon="plus-circle" />
-                    </Button>
                   </div>
                 )}
 
@@ -603,6 +509,7 @@ const ProjectRoute: FC = () => {
                   }}
                 >
                   {item => {
+                    console.log(item)
                     return (
                       <Item
                         key={item._id}
@@ -613,9 +520,7 @@ const ProjectRoute: FC = () => {
                         <div className="flex select-none outline-none group-aria-selected:text-[--color-font] relative group-hover:bg-[--hl-xs] group-focus:bg-[--hl-sm] transition-colors gap-2 px-4 items-center h-[--line-height-xs] w-full overflow-hidden text-[--hl]">
                           <span className="group-aria-selected:bg-[--color-surprise] transition-colors top-0 left-0 absolute h-full w-[2px] bg-transparent" />
                           <Icon
-                            icon={
-                              isRemoteProject(item) ? 'globe-americas' : 'laptop'
-                            }
+                            icon="laptop"
                           />
                           <span className="truncate">{item.name}</span>
                           <span className="flex-1" />

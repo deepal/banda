@@ -29,11 +29,11 @@ import { createPlugin } from '../../plugins/create';
 import { setTheme } from '../../plugins/misc';
 import { exchangeCodeForToken } from '../../sync/git/github-oauth-provider';
 import { exchangeCodeForGitLabToken } from '../../sync/git/gitlab-oauth-provider';
+import { AppLogo } from '../components/app-icon';
 import { WorkspaceDropdown } from '../components/dropdowns/workspace-dropdown';
 import { GitHubStarsButton } from '../components/github-stars-button';
 import { Hotkey } from '../components/hotkey';
 import { Icon } from '../components/icon';
-import { InsomniaAILogo } from '../components/insomnia-icon';
 import { showError, showModal } from '../components/modals';
 import { AlertModal } from '../components/modals/alert-modal';
 import { AskModal } from '../components/modals/ask-modal';
@@ -264,7 +264,7 @@ const Root = () => {
           <header className="[grid-area:Header] grid grid-cols-3 items-center">
             <div className="flex items-center">
               <div className="flex w-[50px] py-2">
-                <InsomniaAILogo />
+                <AppLogo />
               </div>
               <GitHubStarsButton />
             </div>

@@ -450,7 +450,7 @@ export const exportRequestsToFile = (requestIds: string[]) => {
       }
       const exportPrivateEnvironments = await showExportPrivateEnvironmentsModal();
       const fileName = await showSaveExportedFileDialog({
-        exportedFileNamePrefix: 'Insomnia',
+        exportedFileNamePrefix: 'Banda',
         selectedFormat,
       });
 

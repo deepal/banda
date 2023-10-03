@@ -9,64 +9,62 @@ const BINARY_PREFIX = 'Insomnia.Core';
  */
 const config = {
   npmRebuild: false,
-  appId: 'com.insomnia.app',
+  appId: "com.banda.app",
   protocols: [
     {
-      name: 'Insomnia',
-      role: 'Viewer',
-      schemes: ['insomnia'],
+      name: "Banda",
+      role: "Viewer",
+      schemes: ["banda"],
     },
   ],
   files: [
     {
-      from: './build',
-      to: '.',
-      filter: ['**/*', '!opensource-licenses.txt'],
+      from: "./build",
+      to: ".",
+      filter: ["**/*", "!opensource-licenses.txt"],
     },
-    './package.json',
+    "./package.json",
   ],
   publish: null,
   extraResources: [
     {
-      from: './bin',
-      to: './bin',
-      filter: 'yarn-standalone.js',
+      from: "./bin",
+      to: "./bin",
+      filter: "yarn-standalone.js",
     },
     {
-      from: './build',
-      to: '.',
-      filter: 'opensource-licenses.txt',
+      from: "./build",
+      to: ".",
+      filter: "opensource-licenses.txt",
     },
   ],
   extraMetadata: {
-    main: 'main.min.js', // Override the main path in package.json
+    main: "main.min.js", // Override the main path in package.json
   },
   fileAssociations: [],
   mac: {
     hardenedRuntime: true,
-    category: 'public.app-category.developer-tools',
-    entitlements: './build/static/entitlements.mac.inherit.plist',
-    entitlementsInherit: './build/static/entitlements.mac.inherit.plist',
+    category: "public.app-category.developer-tools",
+    entitlements: "./build/static/entitlements.mac.inherit.plist",
+    entitlementsInherit: "./build/static/entitlements.mac.inherit.plist",
     artifactName: `${BINARY_PREFIX}-\${version}.\${ext}`,
     target: [
       {
-        target: 'dmg',
-        arch: 'universal',
+        target: "dmg",
+        arch: "universal",
       },
       {
-        target: 'zip',
-        arch: 'universal',
+        target: "zip",
+        arch: "universal",
       },
     ],
     extendInfo: {
       NSRequiresAquaSystemAppearance: false,
     },
     notarize: {
-      teamId: 'FX44YY62GV',
+      teamId: "FX44YY62GV",
     },
-    asarUnpack: [
-      'node_modules/@getinsomnia/node-libcurl',
-    ],
+    asarUnpack: ["node_modules/@getinsomnia/node-libcurl"],
   },
   dmg: {
     window: {
@@ -81,60 +79,61 @@ const config = {
       {
         x: 409,
         y: 186,
-        type: 'link',
-        path: '/Applications',
+        type: "link",
+        path: "/Applications",
       },
     ],
   },
   win: {
     target: [
       {
-        target: 'squirrel',
+        target: "squirrel",
       },
       {
-        target: 'portable',
+        target: "portable",
       },
     ],
   },
   squirrelWindows: {
     artifactName: `${BINARY_PREFIX}-\${version}.\${ext}`,
     iconUrl:
-      'https://github.com/kong/insomnia/blob/develop/packages/insomnia/src/icons/icon.ico?raw=true',
+      "https://github.com/kong/insomnia/blob/develop/packages/insomnia/src/icons/icon.ico?raw=true",
   },
   portable: {
     artifactName: `${BINARY_PREFIX}-\${version}-portable.\${ext}`,
   },
   linux: {
     artifactName: `${BINARY_PREFIX}-\${version}.\${ext}`,
-    executableName: 'insomnia',
-    synopsis: 'The Collaborative API Client and Design Tool',
-    category: 'Development',
+    executableName: "insomnia",
+    synopsis: "The Collaborative API Client and Design Tool",
+    category: "Development",
     desktop: {
-      Name: 'Insomnia',
-      Comment: 'Insomnia is a cross-platform REST client, built on top of Electron.',
-      Categories: 'Development',
-      Keywords: 'GraphQL;REST;gRPC;SOAP;openAPI;GitOps;',
+      Name: "Insomnia",
+      Comment:
+        "Insomnia is a cross-platform REST client, built on top of Electron.",
+      Categories: "Development",
+      Keywords: "GraphQL;REST;gRPC;SOAP;openAPI;GitOps;",
     },
     target: [
       {
-        target: 'AppImage',
+        target: "AppImage",
       },
       {
-        target: 'deb',
+        target: "deb",
       },
       {
-        target: 'tar.gz',
+        target: "tar.gz",
       },
       {
-        target: 'rpm',
+        target: "rpm",
       },
       {
-        target: 'snap',
+        target: "snap",
       },
     ],
   },
   snap: {
-    base: 'core22',
+    base: "core22",
   },
 };
 

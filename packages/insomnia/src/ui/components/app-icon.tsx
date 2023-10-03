@@ -16,7 +16,7 @@ const RelativeFrame = styled.div({
   gap: 'var(--padding-xs)',
 });
 
-export const InsomniaAILogo = () => {
+export const AppLogo = () => {
   return (
     <Layout>
       <RelativeFrame>

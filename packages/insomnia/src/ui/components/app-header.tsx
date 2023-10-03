@@ -2,8 +2,8 @@ import classNames from 'classnames';
 import React, { FC, Fragment, ReactNode } from 'react';
 import styled from 'styled-components';
 
+import { AppLogo } from './app-icon';
 import { GitHubStarsButton } from './github-stars-button';
-import { InsomniaAILogo } from './insomnia-icon';
 const LogoWrapper = styled.div({
   display: 'flex',
   justifyContent: 'center',
@@ -77,7 +77,7 @@ export const AppHeader: FC<AppHeaderProps> = ({
       gridLeft={(
         <Fragment>
           <LogoWrapper>
-            <InsomniaAILogo />
+            <AppLogo />
           </LogoWrapper>
           <GitHubStarsButton />
         </Fragment>
