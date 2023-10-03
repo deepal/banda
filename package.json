@@ -36,10 +36,6 @@
     "watch:app": "npm run build:main.min.js --workspace=packages/insomnia && npm run start:dev-server --workspace=packages/insomnia",
     "app-build": "npm run build --workspace=packages/insomnia",
     "app-package": "npm run package --workspace=packages/insomnia",
-    "test:smoke:dev": "npm run test:dev --workspace=packages/insomnia-smoke-test -- --project=Smoke",
-    "test:smoke:build": "npm run test:build --workspace=packages/insomnia-smoke-test -- --project=Smoke",
-    "test:smoke:package": "npm run test:package --workspace=packages/insomnia-smoke-test -- --project=Smoke",
-    "test:smoke:cli": "npm run test:cli --workspace=packages/insomnia-smoke-test",
     "changelog-image": "esr ./scripts/changelog-image/changelog-image.ts",
     "download-all-npm-plugins": "esr ./scripts/download-all-npm-plugins.ts"
   },
