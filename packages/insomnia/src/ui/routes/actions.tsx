@@ -3,25 +3,19 @@ import { generate, runTests, type Test } from 'insomnia-testing';
 import path from 'path';
 import { ActionFunction, redirect } from 'react-router-dom';
 
-import * as session from '../../account/session';
-import { parseApiSpec, resolveComponentSchemaRefs } from '../../common/api-specs';
 import { ACTIVITY_DEBUG, ACTIVITY_SPEC } from '../../common/constants';
 import { database } from '../../common/database';
 import { database as db } from '../../common/database';
 import { importResourcesToWorkspace, scanResources } from '../../common/import';
-import { generateId } from '../../common/misc';
 import * as models from '../../models';
 import { getById, update } from '../../models/helpers/request-operations';
 import { DEFAULT_ORGANIZATION_ID } from '../../models/organization';
 import { DEFAULT_PROJECT_ID, isRemoteProject } from '../../models/project';
-import { isRequest, Request } from '../../models/request';
 import { isRequestGroup, isRequestGroupId } from '../../models/request-group';
 import { UnitTest } from '../../models/unit-test';
 import { isCollection, Workspace } from '../../models/workspace';
 import { WorkspaceMeta } from '../../models/workspace-meta';
 import { getSendRequestCallback } from '../../network/unit-test-feature';
-import { initializeLocalBackendProjectAndMarkForSync } from '../../sync/vcs/initialize-backend-project';
-import { getVCS } from '../../sync/vcs/vcs';
 import { invariant } from '../../utils/invariant';
 import { SegmentEvent } from '../analytics';
 
@@ -116,18 +110,8 @@ export const createNewWorkspaceAction: ActionFunction = async ({
   // Create default env, cookie jar, and meta
   await models.environment.getOrCreateForParentId(workspace._id);
   await models.cookieJar.getOrCreateForParentId(workspace._id);
-  const workspaceMeta = await models.workspaceMeta.getOrCreateByParentId(workspace._id);
 
   await database.flushChanges(flushId);
-  if (session.isLoggedIn() && isRemoteProject(project) && !workspaceMeta.gitRepositoryId) {
-    const vcs = getVCS();
-    if (vcs) {
-      await initializeLocalBackendProjectAndMarkForSync({
-        vcs,
-        workspace,
-      });
-    }
-  }
 
   window.main.trackSegmentEvent({
     event: isCollection(workspace)
@@ -161,18 +145,6 @@ export const deleteWorkspaceAction: ActionFunction = async ({
 
   await models.stats.incrementDeletedRequestsForDescendents(workspace);
   await models.workspace.remove(workspace);
-
-  try {
-    const vcs = getVCS();
-    if (vcs) {
-      const backendProject = await vcs._getBackendProjectByRootDocument(workspace._id);
-      await vcs._removeProject(backendProject);
-
-      console.log({ projectsLOCAL: await vcs.localBackendProjects() });
-    }
-  } catch (err) {
-    console.warn('Failed to remove project from VCS', err);
-  }
   console.log(`redirecting to /organization/${organizationId}/project/${projectId}`);
   return redirect(`/organization/${organizationId}/project/${projectId}`);
 };
@@ -218,19 +190,6 @@ export const duplicateWorkspaceAction: ActionFunction = async ({ request, params
   await models.environment.getOrCreateForParentId(newWorkspace._id);
   await models.cookieJar.getOrCreateForParentId(newWorkspace._id);
   await models.workspaceMeta.getOrCreateByParentId(newWorkspace._id);
-
-  try {
-    // Mark for sync if logged in and in the expected project
-    const vcs = getVCS();
-    if (session.isLoggedIn() && vcs && isRemoteProject(duplicateToProject)) {
-      await initializeLocalBackendProjectAndMarkForSync({
-        vcs: vcs.newInstance(),
-        workspace: newWorkspace,
-      });
-    }
-  } catch (e) {
-    console.warn('Failed to initialize local backend project', e);
-  }
 
   return redirect(
     `/organization/${organizationId}/project/${projectId}/workspace/${newWorkspace._id}/${newWorkspace.scope === 'collection' ? ACTIVITY_DEBUG : ACTIVITY_SPEC
@@ -524,251 +483,6 @@ export const generateCollectionFromApiSpecAction: ActionFunction = async ({
   return redirect(`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/${ACTIVITY_DEBUG}`);
 };
 
-export const generateCollectionAndTestsAction: ActionFunction = async ({ params }) => {
-  const { organizationId, projectId, workspaceId } = params;
-
-  invariant(typeof organizationId === 'string', 'Organization ID is required');
-  invariant(typeof projectId === 'string', 'Project ID is required');
-  invariant(typeof workspaceId === 'string', 'Workspace ID is required');
-
-  const apiSpec = await models.apiSpec.getByParentId(workspaceId);
-
-  invariant(apiSpec, 'API Spec not found');
-
-  const workspace = await models.workspace.getById(workspaceId);
-
-  invariant(workspace, 'Workspace not found');
-
-  const workspaceMeta = await models.workspaceMeta.getOrCreateByParentId(workspaceId);
-
-  const isLintError = (result: IRuleResult) => result.severity === 0;
-  const rulesetPath = path.join(
-    process.env['INSOMNIA_DATA_PATH'] || window.app.getPath('userData'),
-    `version-control/git/${workspaceMeta?.gitRepositoryId}/other/.spectral.yaml`,
-  );
-
-  const results = (await window.main.spectralRun({ contents: apiSpec.contents, rulesetPath })).filter(isLintError);
-  if (apiSpec.contents && results && results.length) {
-    throw new Error('Error Generating Configuration');
-  }
-
-  const resources = await scanResources({
-    content: apiSpec.contents,
-  });
-
-  const aiGeneratedRequestGroup = await models.requestGroup.create({
-    name: 'AI Generated Requests',
-    parentId: workspaceId,
-  });
-
-  const requests = resources.requests?.filter(isRequest).map(request => {
-    return {
-      ...request,
-      _id: generateId(models.request.prefix),
-      parentId: aiGeneratedRequestGroup._id,
-    };
-  }) || [];
-
-  await Promise.all(requests.map(request => models.request.create(request)));
-
-  const aiTestSuite = await models.unitTestSuite.create({
-    name: 'AI Generated Tests',
-    parentId: workspaceId,
-  });
-
-  const spec = parseApiSpec(apiSpec.contents);
-
-  const getMethodInfo = (request: Request) => {
-    try {
-      const specPaths = Object.keys(spec.contents?.paths) || [];
-
-      const pathMatches = specPaths.filter(path => request.url.endsWith(path));
-
-      const closestPath = pathMatches.sort((a, b) => {
-        return a.length - b.length;
-      })[0];
-
-      const methodInfo = spec.contents?.paths[closestPath][request.method.toLowerCase()];
-
-      return methodInfo;
-    } catch (error) {
-      console.log(error);
-      return undefined;
-    }
-  };
-
-  const tests: Partial<UnitTest>[] = requests.map(request => {
-    return {
-      name: `Test: ${request.name}`,
-      code: '',
-      parentId: aiTestSuite._id,
-      requestId: request._id,
-    };
-  });
-
-  const total = tests.length;
-  let progress = 0;
-
-  // @TODO Investigate the defer API for streaming results.
-  const progressStream = new TransformStream();
-  const writer = progressStream.writable.getWriter();
-
-  writer.write({
-    progress,
-    total,
-  });
-
-  for (const test of tests) {
-    async function generateTest() {
-      try {
-        const request = requests.find(r => r._id === test.requestId);
-        if (!request) {
-          throw new Error('Request not found');
-        }
-
-        const methodInfo = resolveComponentSchemaRefs(spec, getMethodInfo(request));
-
-        const response = await window.main.insomniaFetch<{ test: { requestId: string } }>({
-          method: 'POST',
-          origin: 'https://ai.insomnia.rest',
-          path: '/v1/generate-test',
-          sessionId: session.getCurrentSessionId(),
-          data: {
-            teamId: organizationId,
-            request: requests.find(r => r._id === test.requestId),
-            methodInfo,
-          },
-        });
-
-        const aiTest = response.test;
-
-        await models.unitTest.create({ ...aiTest, parentId: aiTestSuite._id, requestId: test.requestId });
-        writer.write({
-          progress: ++progress,
-          total,
-        });
-
-      } catch (err) {
-        console.log(err);
-        writer.write({
-          progress: ++progress,
-          total,
-        });
-      }
-    }
-    generateTest();
-  }
-
-  return progressStream;
-};
-
-export const generateTestsAction: ActionFunction = async ({ params }) => {
-  const { organizationId, projectId, workspaceId } = params;
-
-  invariant(typeof organizationId === 'string', 'Organization ID is required');
-  invariant(typeof projectId === 'string', 'Project ID is required');
-  invariant(typeof workspaceId === 'string', 'Workspace ID is required');
-
-  const apiSpec = await models.apiSpec.getByParentId(workspaceId);
-
-  invariant(apiSpec, 'API Spec not found');
-
-  const workspace = await models.workspace.getById(workspaceId);
-
-  invariant(workspace, 'Workspace not found');
-
-  const workspaceDescendants = await database.withDescendants(workspace);
-
-  const requests = workspaceDescendants.filter(isRequest);
-
-  const aiTestSuite = await models.unitTestSuite.create({
-    name: 'AI Generated Tests',
-    parentId: workspaceId,
-  });
-
-  const tests: Partial<UnitTest>[] = requests.map(request => {
-    return {
-      name: `Test: ${request.name}`,
-      code: '',
-      parentId: aiTestSuite._id,
-      requestId: request._id,
-    };
-  });
-
-  const total = tests.length;
-  let progress = 0;
-  // @TODO Investigate the defer API for streaming results.
-  const progressStream = new TransformStream();
-  const writer = progressStream.writable.getWriter();
-
-  writer.write({
-    progress,
-    total,
-  });
-
-  for (const test of tests) {
-    async function generateTest() {
-      try {
-        const response = await window.main.insomniaFetch<{ test: { requestId: string } }>({
-          method: 'POST',
-          origin: 'https://ai.insomnia.rest',
-          path: '/v1/generate-test',
-          sessionId: session.getCurrentSessionId(),
-          data: {
-            teamId: organizationId,
-            request: requests.find(r => r._id === test.requestId),
-          },
-        });
-
-        const aiTest = response.test;
-
-        await models.unitTest.create({ ...aiTest, parentId: aiTestSuite._id, requestId: test.requestId });
-
-        writer.write({
-          progress: ++progress,
-          total,
-        });
-      } catch (err) {
-        console.log(err);
-        writer.write({
-          progress: ++progress,
-          total,
-        });
-      }
-    }
-
-    generateTest();
-  }
-
-  return progressStream;
-};
-
-export const accessAIApiAction: ActionFunction = async ({ params }) => {
-  const { organizationId, projectId, workspaceId } = params;
-
-  invariant(typeof organizationId === 'string', 'Organization ID is required');
-  invariant(typeof projectId === 'string', 'Project ID is required');
-  invariant(typeof workspaceId === 'string', 'Workspace ID is required');
-
-  try {
-    const response = await window.main.insomniaFetch<{ enabled: boolean }>({
-      method: 'POST',
-      origin: 'https://ai.insomnia.rest',
-      path: '/v1/access',
-      sessionId: session.getCurrentSessionId(),
-      data: {
-        teamId: organizationId,
-      },
-    });
-
-    return {
-      enabled: response.enabled,
-    };
-  } catch (err) {
-    return { enabled: false };
-  }
-};
-
 export const createEnvironmentAction: ActionFunction = async ({
   params,
   request,
@@ -789,6 +503,7 @@ export const createEnvironmentAction: ActionFunction = async ({
 
   return environment;
 };
+
 export const updateEnvironment: ActionFunction = async ({ request, params }) => {
   const { workspaceId } = params;
   invariant(typeof workspaceId === 'string', 'Workspace ID is required');

@@ -7,9 +7,6 @@ import {
   Button,
   Item,
   Link,
-  Menu,
-  MenuTrigger,
-  Popover,
   Tooltip,
   TooltipTrigger,
 } from 'react-aria-components';
@@ -18,22 +15,13 @@ import {
   NavLink,
   Outlet,
   useLoaderData,
-  useLocation,
-  useNavigate,
   useParams,
   useRouteLoaderData,
 } from 'react-router-dom';
 
-import {
-  getFirstName,
-  getLastName,
-  isLoggedIn,
-  logout,
-  onLoginLogout,
-} from '../../account/session';
 import { isDevelopment } from '../../common/constants';
 import * as models from '../../models';
-import { isDefaultOrganization } from '../../models/organization';
+import { defaultOrganization, isDefaultOrganization } from '../../models/organization';
 import { Settings } from '../../models/settings';
 import { isDesign } from '../../models/workspace';
 import { reloadPlugins } from '../../plugins';
@@ -41,7 +29,6 @@ import { createPlugin } from '../../plugins/create';
 import { setTheme } from '../../plugins/misc';
 import { exchangeCodeForToken } from '../../sync/git/github-oauth-provider';
 import { exchangeCodeForGitLabToken } from '../../sync/git/gitlab-oauth-provider';
-import { submitAuthCode } from '../auth-session-provider';
 import { WorkspaceDropdown } from '../components/dropdowns/workspace-dropdown';
 import { GitHubStarsButton } from '../components/github-stars-button';
 import { Hotkey } from '../components/hotkey';
@@ -51,19 +38,16 @@ import { showError, showModal } from '../components/modals';
 import { AlertModal } from '../components/modals/alert-modal';
 import { AskModal } from '../components/modals/ask-modal';
 import { ImportModal } from '../components/modals/import-modal';
-import { LoginModal, showLoginModal } from '../components/modals/login-modal';
 import {
   SettingsModal,
   showSettingsModal,
   TAB_INDEX_PLUGINS,
-  TAB_INDEX_THEMES } from '../components/modals/settings-modal';
-import { Toast } from '../components/toast';
+  TAB_INDEX_THEMES,
+} from '../components/modals/settings-modal';
 import { AppHooks } from '../containers/app-hooks';
-import { AIProvider } from '../context/app/ai-context';
 import { NunjucksEnabledProvider } from '../context/nunjucks/nunjucks-enabled-context';
 import { useSettingsPatcher } from '../hooks/use-request';
 import Modals from './modals';
-import { useOrganizationLoaderData } from './organization';
 import { WorkspaceLoaderData } from './workspace';
 
 export interface RootLoaderData {
@@ -97,25 +81,13 @@ const getNameInitials = (name: string) => {
 };
 
 const Root = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const { settings } = useLoaderData() as RootLoaderData;
-  const { organizations } = useOrganizationLoaderData();
+  const organizations = [defaultOrganization];
   const workspaceData = useRouteLoaderData(
     ':workspaceId'
   ) as WorkspaceLoaderData | null;
   const [importUri, setImportUri] = useState('');
   const patchSettings = useSettingsPatcher();
-
-  useEffect(() => {
-    onLoginLogout(() => {
-      // Update the hash of the current route to force revalidation of data
-      navigate({
-        pathname: location.pathname,
-        hash: 'revalidate=true',
-      });
-    });
-  }, [location.pathname, navigate]);
 
   useEffect(() => {
     return window.main.on(
@@ -143,14 +115,6 @@ const Root = () => {
             showModal(AlertModal, {
               title: params.title,
               message: params.message,
-            });
-            break;
-
-          case 'insomnia://app/auth/login':
-            showModal(LoginModal, {
-              title: params.title,
-              message: params.message,
-              reauth: true,
             });
             break;
 
@@ -245,11 +209,6 @@ const Root = () => {
             break;
           }
 
-          case 'insomnia://app/auth/finish': {
-            submitAuthCode(params.box);
-            break;
-          }
-
           default: {
             console.log(`Unknown deep link: ${url}`);
           }
@@ -266,146 +225,140 @@ const Root = () => {
 
   const crumbs = workspaceData
     ? [
-        {
-          id: workspaceData.activeProject._id,
-          label: workspaceData.activeProject.name,
-          node: (
-            <Link data-testid="project">
-              <NavLink
-                to={`/organization/${organizationId}/project/${workspaceData.activeProject._id}`}
-              >
-                {workspaceData.activeProject.name}
-              </NavLink>
-            </Link>
-          ),
-        },
-        {
-          id: workspaceData.activeWorkspace._id,
-          label: workspaceData.activeWorkspace.name,
-          node: <WorkspaceDropdown />,
-        },
-      ]
+      {
+        id: workspaceData.activeProject._id,
+        label: workspaceData.activeProject.name,
+        node: (
+          <Link data-testid="project">
+            <NavLink
+              to={`/organization/${organizationId}/project/${workspaceData.activeProject._id}`}
+            >
+              {workspaceData.activeProject.name}
+            </NavLink>
+          </Link>
+        ),
+      },
+      {
+        id: workspaceData.activeWorkspace._id,
+        label: workspaceData.activeWorkspace.name,
+        node: <WorkspaceDropdown />,
+      },
+    ]
     : [];
 
   return (
-    <AIProvider>
-      <NunjucksEnabledProvider>
-        <AppHooks />
-        <div className="app">
-          <Modals />
-          {/* triggered by insomnia://app/import */}
-          {importUri && (
-            <ImportModal
-              onHide={() => setImportUri('')}
-              projectName="Starter"
-              organizationId={organizationId}
-              from={{ type: 'uri', defaultValue: importUri }}
-            />
-          )}
-          <div className="w-full h-full divide-x divide-solid divide-y divide-[--hl-md] grid-template-app-layout grid relative bg-[--color-bg]">
-            <header className="[grid-area:Header] grid grid-cols-3 items-center">
-              <div className="flex items-center">
-                <div className="flex w-[50px] py-2">
-                  <InsomniaAILogo />
-                </div>
-                {!isLoggedIn() ? <GitHubStarsButton /> : null}
+    <NunjucksEnabledProvider>
+      <AppHooks />
+      <div className="app">
+        <Modals />
+        {/* triggered by insomnia://app/import */}
+        {importUri && (
+          <ImportModal
+            onHide={() => setImportUri('')}
+            projectName="Starter"
+            organizationId={organizationId}
+            from={{ type: 'uri', defaultValue: importUri }}
+          />
+        )}
+        <div className="w-full h-full divide-x divide-solid divide-y divide-[--hl-md] grid-template-app-layout grid relative bg-[--color-bg]">
+          <header className="[grid-area:Header] grid grid-cols-3 items-center">
+            <div className="flex items-center">
+              <div className="flex w-[50px] py-2">
+                <InsomniaAILogo />
               </div>
-              <div className="flex gap-2 flex-nowrap items-center justify-center">
-                {workspaceData && (
-                  <Fragment>
-                    <Breadcrumbs items={crumbs}>
-                      {item => (
-                        <Item key={item.id} id={item.id}>
-                          {item.node}
-                        </Item>
-                      )}
-                    </Breadcrumbs>
-                    {isDesign(workspaceData?.activeWorkspace) && (
-                      <nav className="flex rounded-full justify-between content-evenly font-semibold bg-[--hl-xs] p-[--padding-xxs]">
-                        {['spec', 'debug', 'test'].map(item => (
-                          <NavLink
-                            key={item}
-                            to={`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/${item}`}
-                            className={({ isActive }) =>
-                              `${
-                                isActive
-                                  ? 'text-[--color-font] bg-[--color-bg]'
-                                  : ''
-                              } no-underline transition-colors text-center outline-none min-w-[4rem] uppercase text-[--color-font] text-xs px-[--padding-xs] py-[--padding-xxs] rounded-full`
-                            }
-                          >
-                            {item}
-                          </NavLink>
-                        ))}
-                      </nav>
+              <GitHubStarsButton />
+            </div>
+            <div className="flex gap-2 flex-nowrap items-center justify-center">
+              {workspaceData && (
+                <Fragment>
+                  <Breadcrumbs items={crumbs}>
+                    {item => (
+                      <Item key={item.id} id={item.id}>
+                        {item.node}
+                      </Item>
                     )}
-                  </Fragment>
-                )}
-              </div>
-            </header>
-            <div className="[grid-area:Navbar] overflow-hidden">
-              <nav className="flex flex-col items-center place-content-stretch gap-[--padding-md] w-full h-full overflow-y-auto py-[--padding-md]">
-                {organizations.map(organization => (
-                  <TooltipTrigger key={organization._id}>
-                    <Link>
-                      <NavLink
-                        className={({ isActive }) =>
-                          `select-none text-[--color-font-surprise] flex-shrink-0 hover:no-underline transition-all duration-150 bg-gradient-to-br box-border from-[#4000BF] to-[#154B62] p-[--padding-sm] font-bold outline-[3px] rounded-md w-[28px] h-[28px] flex items-center justify-center active:outline overflow-hidden outline-offset-[3px] outline ${
-                            isActive
-                              ? 'outline-[--color-font]'
-                              : 'outline-transparent focus:outline-[--hl-md] hover:outline-[--hl-md]'
-                          }`
-                        }
-                        to={`/organization/${organization._id}`}
-                      >
-                        {isDefaultOrganization(organization) ? (
-                          <Icon icon="home" />
-                        ) : (
-                          getNameInitials(organization.name)
-                        )}
-                      </NavLink>
-                    </Link>
-                    <Tooltip
-                      placement="right"
-                      offset={8}
-                      className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                  </Breadcrumbs>
+                  {isDesign(workspaceData?.activeWorkspace) && (
+                    <nav className="flex rounded-full justify-between content-evenly font-semibold bg-[--hl-xs] p-[--padding-xxs]">
+                      {['spec', 'debug', 'test'].map(item => (
+                        <NavLink
+                          key={item}
+                          to={`/organization/${organizationId}/project/${projectId}/workspace/${workspaceId}/${item}`}
+                          className={({ isActive }) =>
+                            `${isActive
+                              ? 'text-[--color-font] bg-[--color-bg]'
+                              : ''
+                            } no-underline transition-colors text-center outline-none min-w-[4rem] uppercase text-[--color-font] text-xs px-[--padding-xs] py-[--padding-xxs] rounded-full`
+                          }
+                        >
+                          {item}
+                        </NavLink>
+                      ))}
+                    </nav>
+                  )}
+                </Fragment>
+              )}
+            </div>
+          </header>
+          <div className="[grid-area:Navbar] overflow-hidden">
+            <nav className="flex flex-col items-center place-content-stretch gap-[--padding-md] w-full h-full overflow-y-auto py-[--padding-md]">
+              {organizations.map(organization => (
+                <TooltipTrigger key={organization._id}>
+                  <Link>
+                    <NavLink
+                      className={({ isActive }) =>
+                        `select-none text-[--color-font-surprise] flex-shrink-0 hover:no-underline transition-all duration-150 bg-gradient-to-br box-border from-[#4000BF] to-[#154B62] p-[--padding-sm] font-bold outline-[3px] rounded-md w-[28px] h-[28px] flex items-center justify-center active:outline overflow-hidden outline-offset-[3px] outline ${isActive
+                          ? 'outline-[--color-font]'
+                          : 'outline-transparent focus:outline-[--hl-md] hover:outline-[--hl-md]'
+                        }`
+                      }
+                      to={`/organization/${organization._id}`}
                     >
-                      <span>{organization.name}</span>
-                    </Tooltip>
-                  </TooltipTrigger>
-                ))}
-              </nav>
-            </div>
-            <Outlet />
-            <div className="relative [grid-area:Statusbar] flex items-center justify-between overflow-hidden">
-              <TooltipTrigger>
-                <Button
-                  data-testid="settings-button"
-                  className="px-4 py-1 h-full flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
-                  onPress={showSettingsModal}
-                >
-                  <Icon icon="gear" /> Preferences
-                </Button>
-                <Tooltip
-                  placement="top"
-                  offset={8}
-                  className="border flex items-center gap-2 select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
-                >
-                  Preferences
-                  <Hotkey
-                    keyBindings={
-                      settings.hotKeyRegistry.preferences_showGeneral
-                    }
-                  />
-                </Tooltip>
-              </TooltipTrigger>
-            </div>
+                      {isDefaultOrganization(organization) ? (
+                        <Icon icon="home" />
+                      ) : (
+                        getNameInitials(organization.name)
+                      )}
+                    </NavLink>
+                  </Link>
+                  <Tooltip
+                    placement="right"
+                    offset={8}
+                    className="border select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+                  >
+                    <span>{organization.name}</span>
+                  </Tooltip>
+                </TooltipTrigger>
+              ))}
+            </nav>
           </div>
-
-          <Toast />
+          <Outlet />
+          <div className="relative [grid-area:Statusbar] flex items-center justify-between overflow-hidden">
+            <TooltipTrigger>
+              <Button
+                data-testid="settings-button"
+                className="px-4 py-1 h-full flex items-center justify-center gap-2 aria-pressed:bg-[--hl-sm] text-[--color-font] text-xs hover:bg-[--hl-xs] focus:ring-inset ring-1 ring-transparent focus:ring-[--hl-md] transition-all"
+                onPress={showSettingsModal}
+              >
+                <Icon icon="gear" /> Preferences
+              </Button>
+              <Tooltip
+                placement="top"
+                offset={8}
+                className="border flex items-center gap-2 select-none text-sm min-w-max border-solid border-[--hl-sm] shadow-lg bg-[--color-bg] text-[--color-font] px-4 py-2 rounded-md overflow-y-auto max-h-[85vh] focus:outline-none"
+              >
+                Preferences
+                <Hotkey
+                  keyBindings={
+                    settings.hotKeyRegistry.preferences_showGeneral
+                  }
+                />
+              </Tooltip>
+            </TooltipTrigger>
+          </div>
         </div>
-      </NunjucksEnabledProvider>
-    </AIProvider>
+      </div>
+    </NunjucksEnabledProvider>
   );
 };
 

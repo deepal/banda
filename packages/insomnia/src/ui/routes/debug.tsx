@@ -51,7 +51,6 @@ import {
 import { invariant } from '../../utils/invariant';
 import { RequestActionsDropdown } from '../components/dropdowns/request-actions-dropdown';
 import { RequestGroupActionsDropdown } from '../components/dropdowns/request-group-actions-dropdown';
-import { WorkspaceSyncDropdown } from '../components/dropdowns/workspace-sync-dropdown';
 import { ErrorBoundary } from '../components/error-boundary';
 import { Icon } from '../components/icon';
 import { useDocBodyKeyboardShortcuts } from '../components/keydown-binder';
@@ -997,8 +996,6 @@ export const Debug: FC = () => {
               </GridList>
             </div>
           </div>
-
-          <WorkspaceSyncDropdown />
 
           {isEnvironmentModalOpen && (
             <WorkspaceEnvironmentsEditModal

@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useRef, useState } from 'react';
 import { useFetcher, useParams, useRouteLoaderData } from 'react-router-dom';
 
-import { isLoggedIn } from '../../../account/session';
 import { getProductName } from '../../../common/constants';
 import { database as db } from '../../../common/database';
 import { getWorkspaceLabel } from '../../../common/get-workspace-label';
@@ -13,10 +12,8 @@ import type { WorkspaceAction } from '../../../plugins';
 import { getWorkspaceActions } from '../../../plugins';
 import * as pluginContexts from '../../../plugins/context';
 import { invariant } from '../../../utils/invariant';
-import { useAIContext } from '../../context/app/ai-context';
 import { WorkspaceLoaderData } from '../../routes/workspace';
 import { Dropdown, DropdownButton, type DropdownHandle, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
-import { InsomniaAI } from '../insomnia-ai-icon';
 import { showError, showPrompt } from '../modals';
 import { ExportRequestsModal } from '../modals/export-requests-modal';
 import { configGenerators, showGenerateConfigModal } from '../modals/generate-config-modal';
@@ -48,12 +45,6 @@ export const WorkspaceDropdown: FC = () => {
   const [actionPlugins, setActionPlugins] = useState<WorkspaceAction[]>([]);
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
   const dropdownRef = useRef<DropdownHandle>(null);
-
-  const {
-    generating: loading,
-    access,
-    generateTests,
-  } = useAIContext();
 
   const handlePluginClick = useCallback(async ({ action, plugin, label }: WorkspaceAction, workspace: Workspace) => {
     setLoadingActions({ ...loadingActions, [label]: true });
@@ -216,40 +207,6 @@ export const WorkspaceDropdown: FC = () => {
                 icon="code"
                 label={p.label}
                 onClick={() => handleGenerateConfig(p.label)}
-              />
-            </DropdownItem>
-          }
-        </DropdownSection>
-
-        <DropdownSection
-          aria-label='AI'
-          title="Insomnia AI"
-          items={isLoggedIn() && access.enabled && activeWorkspace.scope === 'design' ? [{
-            label: 'Auto-generate Tests For Collection',
-            key: 'insomnia-ai/generate-test-suite',
-            action: generateTests,
-          }] : []}
-        >
-          {item =>
-            <DropdownItem
-              key={`generateConfig-${item.label}`}
-              aria-label={item.label}
-            >
-              <ItemContent
-                icon={
-                  <span
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '0 var(--padding-xs)',
-                      width: 'unset',
-                    }}
-                  >
-                    <InsomniaAI />
-                  </span>}
-                isDisabled={loading}
-                label={item.label}
-                onClick={item.action}
               />
             </DropdownItem>
           }
