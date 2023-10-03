@@ -721,22 +721,6 @@ const router = createMemoryRouter(
                           await import('./routes/actions')
                         ).createNewProjectAction(...args),
                     },
-                    {
-                      path: ':projectId/remote-collections',
-                      loader: async (...args) =>
-                        (
-                          await import('./routes/remote-collections')
-                        ).remoteCollectionsLoader(...args),
-                      children: [
-                        {
-                          path: 'pull',
-                          action: async (...args) =>
-                            (
-                              await import('./routes/remote-collections')
-                            ).pullRemoteCollectionAction(...args),
-                        },
-                      ],
-                    },
                   ],
                 },
               ],
