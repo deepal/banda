@@ -7,7 +7,7 @@ import { getWorkspaceLabel } from '../../../common/get-workspace-label';
 import { RENDER_PURPOSE_NO_RENDER } from '../../../common/render';
 import { isRequest } from '../../../models/request';
 import { isRequestGroup } from '../../../models/request-group';
-import { isDesign, Workspace } from '../../../models/workspace';
+import { Workspace } from '../../../models/workspace';
 import type { WorkspaceAction } from '../../../plugins';
 import { getWorkspaceActions } from '../../../plugins';
 import * as pluginContexts from '../../../plugins/context';
@@ -16,7 +16,6 @@ import { WorkspaceLoaderData } from '../../routes/workspace';
 import { Dropdown, DropdownButton, type DropdownHandle, DropdownItem, DropdownSection, ItemContent } from '../base/dropdown';
 import { showError, showPrompt } from '../modals';
 import { ExportRequestsModal } from '../modals/export-requests-modal';
-import { configGenerators, showGenerateConfigModal } from '../modals/generate-config-modal';
 import { ImportModal } from '../modals/import-modal';
 import { WorkspaceDuplicateModal } from '../modals/workspace-duplicate-modal';
 import { WorkspaceSettingsModal } from '../modals/workspace-settings-modal';
@@ -28,7 +27,6 @@ export const WorkspaceDropdown: FC = () => {
     activeWorkspace,
     activeWorkspaceMeta,
     activeProject,
-    activeApiSpec,
     clientCertificates,
     caCertificate,
     projects,
@@ -82,16 +80,6 @@ export const WorkspaceDropdown: FC = () => {
     const actionPlugins = await getWorkspaceActions();
     setActionPlugins(actionPlugins);
   }, []);
-
-  const handleGenerateConfig = useCallback((label: string) => {
-    if (!activeApiSpec) {
-      return;
-    }
-    showGenerateConfigModal({
-      apiSpec: activeApiSpec,
-      activeTabLabel: label,
-    });
-  }, [activeApiSpec]);
 
   return (
     <>
@@ -193,24 +181,6 @@ export const WorkspaceDropdown: FC = () => {
           ))}
         </DropdownSection>
 
-        <DropdownSection
-          aria-label='Config Generators Section'
-          title="Config Generators"
-          items={isDesign(activeWorkspace) ? configGenerators : []}
-        >
-          {p =>
-            <DropdownItem
-              key={`generateConfig-${p.label}`}
-              aria-label={p.label}
-            >
-              <ItemContent
-                icon="code"
-                label={p.label}
-                onClick={() => handleGenerateConfig(p.label)}
-              />
-            </DropdownItem>
-          }
-        </DropdownSection>
       </Dropdown>
       {isDuplicateModalOpen && (
         <WorkspaceDuplicateModal
