@@ -17,7 +17,7 @@
   "workspaces": [
     "packages/insomnia-testing",
     "packages/insomnia-send-request",
-    "packages/insomnia",
+    "packages/insomnia"
   ],
   "scripts": {
     "dev": "npm start --workspace=packages/insomnia",
