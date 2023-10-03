@@ -15,12 +15,9 @@
     "npm": ">=8.19.0"
   },
   "workspaces": [
-    "packages/openapi-2-kong",
     "packages/insomnia-testing",
     "packages/insomnia-send-request",
     "packages/insomnia",
-    "packages/insomnia-inso",
-    "packages/insomnia-smoke-test"
   ],
   "scripts": {
     "dev": "npm start --workspace=packages/insomnia",
@@ -29,10 +26,6 @@
     "test": "npm run test --workspaces --if-present",
     "lint:markdown": "npx markdownlint-cli2 \"**/*.md\" \"#**/node_modules\"",
     "clean": "git clean -dfX",
-    "inso-start": "npm start --workspace=packages/insomnia-inso",
-    "inso-package": "npm run build:sr --workspace=packages/insomnia && npm run package --workspace=packages/insomnia-inso",
-    "inso-package:artifacts": "npm run artifacts --workspace=packages/insomnia-inso",
-    "test:bundled-inso": "npm run build --workspace=packages/insomnia-inso && npm run test:bundled-inso --workspace=packages/insomnia-inso",
     "watch:app": "npm run build:main.min.js --workspace=packages/insomnia && npm run start:dev-server --workspace=packages/insomnia",
     "app-build": "npm run build --workspace=packages/insomnia",
     "app-package": "npm run package --workspace=packages/insomnia",
